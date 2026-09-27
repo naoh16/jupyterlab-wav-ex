@@ -1,0 +1,21 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: v4.6.5
+_src_path: https://github.com/jupyterlab/extension-template
+advanced: true
+author_email: sunao.hara@gmail.com
+author_name: Sunao Hara
+data_format: string
+file_extension: .wav
+has_ai_rules: false
+has_binder: true
+kind: mimerenderer
+labextension_name: jupyterlab-wav-ex
+mimetype: audio/wav
+mimetype_name: 'wav'
+project_short_description: 'A JupyterLab MIME rederer Extension for RIFF-wav files  '
+python_name: jupyterlab_wav_ex
+repository: https://github.com/naoh16/jupyterlab-wav-ex
+test: true
+viewer_name: WAV Viewer
+yarn_linker: node-modules
+
