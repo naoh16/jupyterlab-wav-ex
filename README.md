@@ -10,6 +10,8 @@ This extension is inspired from
 and
 its [forked-version](https://github.com/naoh16/jupyterlab-wav) by @naoh16.
 
+![](https://raw.githubusercontent.com/naoh16/jupyterlab-wav-ex/master/docs/img/jupyterlab_wav_ex_ss1.png)
+
 ## Requirements
 
 - JupyterLab >= 4.0.0
