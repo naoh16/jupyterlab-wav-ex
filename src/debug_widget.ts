@@ -4,7 +4,7 @@ import { AudioDump } from './audiofile.js';
 import { ConfigWidget } from './config_widget.js';
 
 export class DebugWidget extends TabPanel {
-  public tabConfig: Widget;
+  public tabConfig: ConfigWidget;
   public tabInspector: Widget;
   public tabDebug: Widget;
   private audioDump: AudioDump | undefined;
@@ -49,6 +49,7 @@ export class DebugWidget extends TabPanel {
     //this.tabDebug.node.innerHTML = `<pre>${content}</pre>`;
 
     this.audioDump = new AudioDump(content, 256);
+    this.tabConfig.setOriginalSampleRate(this.audioDump.nSamplesPerSec);
 
     this.tabInspector.node.innerHTML = `<b>sox-like output:</b><br>
     <table style="padding-left: 1em;">

@@ -1,6 +1,7 @@
 import { Widget } from '@lumino/widgets';
 
 import WaveSurfer from 'wavesurfer.js';
+import RegionPlugin from 'wavesurfer.js/dist/plugins/regions.esm.js';
 import TimelinePlugin from 'wavesurfer.js/dist/plugins/timeline.esm.js';
 import SpectrogramPlugin from 'wavesurfer.js/dist/plugins/spectrogram.esm.js';
 
@@ -9,6 +10,7 @@ import { ConfigWidget } from './config_widget.js';
 
 export class WavesurferWidget extends Widget {
   private _ws: WaveSurfer | null = null;
+  private _wsRegion: RegionPlugin | null = null;
   private _toolbar: ToolbarWidget | null = null;
   private _config: ConfigWidget | null = null;
   private _audioUrl: string | null = null;
@@ -35,11 +37,13 @@ export class WavesurferWidget extends Widget {
       this._ws.destroy();
       this._ws = null;
     }
+    this.node.style.backgroundColor = 'black';
 
     this._ws = WaveSurfer.create({
       container: this.node as HTMLElement,
-      waveColor: 'violet',
-      progressColor: 'purple',
+      waveColor: '#4BF2A7',
+      progressColor: '#4BF2A7',
+      cursorColor: 'pink',
       sampleRate: this._config?.sampleRate
     });
     this._ws.registerPlugin(
@@ -49,7 +53,7 @@ export class WavesurferWidget extends Widget {
         primaryLabelInterval: 1,
         style: {
           fontSize: '1rem',
-          color: '#333333'
+          color: '#3e6c99'
         }
       })
     );
@@ -68,6 +72,9 @@ export class WavesurferWidget extends Widget {
       })
     );
 
+    // Region plugin
+    this.registerRegionPlugin();
+
     this._ws.once('ready', () => {
       console.log('WaveSurfer is ready.');
       this.zoom(this._toolbar?.getZoom() || 100);
@@ -84,6 +91,47 @@ export class WavesurferWidget extends Widget {
     this.adjustHeight();
   }
 
+  registerRegionPlugin() {
+    this._wsRegion = RegionPlugin.create();
+    this._ws?.registerPlugin(this._wsRegion);
+
+    this._wsRegion.enableDragSelection({
+      color: 'rgba(255, 64, 64, 0.3)'
+    });
+    this._wsRegion.on('region-out', region => {
+      // console.log('region-out', region);
+      if (this._ws?.isPlaying() && this._ws?.getCurrentTime() > region.end) {
+        this._ws?.pause();
+      }
+      console.log(this._wsRegion?.getRegions());
+    });
+    this._wsRegion.on('region-created', region => {
+      // console.log('region-created', region);
+      this._wsRegion?.getRegions().forEach(r => {
+        if (region.id !== r.id) {
+          r.remove();
+        }
+      });
+      const sr = this._config?.originalSampleRate || -1;
+      this._toolbar?.updateRangeDisplay(region.start, region.end, sr);
+    });
+    this._wsRegion.on('region-updated', region => {
+      // console.log('region-updated', region);
+      const sr = this._config?.originalSampleRate || -1;
+      this._toolbar?.updateRangeDisplay(region.start, region.end, sr);
+    });
+    this._ws?.on('interaction', newTime => {
+      // console.log('interaction', newTime);
+      const r = this._wsRegion?.getRegions();
+      if (r && r.length > 0) {
+        if (newTime < r[0].start || r[0].end < newTime) {
+          this._wsRegion?.clearRegions();
+          this._toolbar?.updateRangeDisplay(null, null, -1);
+        }
+      }
+    });
+  }
+
   load(data: string) {
     if (!data.startsWith('data:')) {
       data = 'data:audio/wav;base64,' + data;
@@ -94,7 +142,18 @@ export class WavesurferWidget extends Widget {
   }
 
   playPause(): void {
-    this._ws?.playPause();
+    if (this._ws?.isPlaying()) {
+      this._ws?.pause();
+    } else {
+      const r = this._wsRegion?.getRegions();
+      if (r && r.length > 0) {
+        const ct = this._ws?.getCurrentTime();
+        if (ct && (ct < r[0].start || r[0].end < ct)) {
+          this._ws?.setTime(r[0].start);
+        }
+      }
+      this._ws?.play();
+    }
   }
 
   zoom(minPxPerSec: number): void {

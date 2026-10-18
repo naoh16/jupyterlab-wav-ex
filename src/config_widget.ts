@@ -16,7 +16,9 @@ const _configHtml = `<div>
       <option value="44100" style="text-align: right;">44,100 Hz</option>
       <option value="48000" style="text-align: right;">48,000 Hz</option>
     </select>
-  </label></div>
+  </label>
+  <span>(Original: <span id="wsOriginalSampleRate">-</span> Hz)</span>
+  </div>
   <div><label>
     Max Frequency:
     <select id="wsMaxFreq">
@@ -97,6 +99,7 @@ const _configHtml = `<div>
 
 export class ConfigWidget extends Widget {
   public sampleRate: number = 16000;
+  public originalSampleRate: number = 0;
   public maxFrequency: number | undefined = 5000;
   public frequencyScale: string = 'linear';
   public fftSize: number = 256;
@@ -117,6 +120,17 @@ export class ConfigWidget extends Widget {
       nshades: 256,
       format: 'float'
     });
+  }
+
+  public setOriginalSampleRate(sampleRate: number) {
+    // Before updating the originalSampleRate,
+    // we need to parse WAV information on DebugWidget.
+    console.log(`ConfigWidget: setOriginalSampleRate(${sampleRate})`);
+    this.originalSampleRate = sampleRate;
+    const originalSampleRateSpan = this.node.querySelector(
+      '#wsOriginalSampleRate'
+    ) as HTMLSpanElement | null;
+    originalSampleRateSpan!.textContent = this.originalSampleRate.toString();
   }
 
   registerHandlers(wsWidget: WavesurferWidget) {
